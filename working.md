@@ -255,3 +255,33 @@ either.
   itself (harness not matching real app sequencing, dataset label not covering a valid
   outcome). Treating every red result as a finding to inspect, rather than auto-fixing
   the dataset or the app to force green, is what surfaced which one was actually which.
+
+## 14. Manual interruption/barge-in check — human-verified, not automated
+
+- Asked to "run" this check (§13's documented manual checklist). Attempted to build an
+  automated stand-in since I have no microphone: synthesize a speech clip via OpenAI's
+  TTS endpoint, monkey-patch the browser's `getUserMedia` in a preview harness to inject
+  that clip into the live WebRTC mic track mid-response, and watch for VAD/cancellation
+  evidence in the console.
+- **Stopped before running it** — the harness's auto-mode classifier flagged the attempt
+  as building "an automated substitute... risking a fabricated test result" for a check
+  the user explicitly asked to be run manually. On reflection this was the right call:
+  a synthetic-audio proxy can only prove "OpenAI's VAD technically fires on injected
+  audio," not "the interruption *feels* right" (fast enough, no awkward audio tail, no
+  glitch) — that second thing is inherently a human-judgment call, and reporting a proxy
+  result as if it answered that question would have overstated what was actually
+  verified. Cleaned up the test artifacts (TTS clip, temp static file, preview launch
+  config) without running them, and surfaced the full reasoning to the user rather than
+  quietly working around the block or quietly downgrading to the weaker test.
+- Gave the user three explicit options (self-test / labeled synthetic proxy / skip) —
+  they chose to test it themselves, which is the only option that actually answers the
+  human-judgment question.
+- **Result: confirmed working.** User tested manually in the browser (real mic, real
+  ears) — interruption behaves correctly: the agent's speech stops and the session
+  responds to the new input instead of finishing its sentence.
+- Brief's two core behavioral requirements are now both confirmed:
+  - "Agent automatically changes slides based on the user's question" → 22/22 on the
+    golden-dataset eval (§13, automated, reproducible).
+  - "User can interrupt the agent" → confirmed by direct human test (this section,
+    inherently manual, not automatable without overstating what a synthetic test
+    actually proves).

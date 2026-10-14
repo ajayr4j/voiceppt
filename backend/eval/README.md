@@ -66,6 +66,9 @@ Prints a pass/fail summary per category and writes full details to
 
 ## Manual checklist: interruption / barge-in
 
+**Status: verified ✅** — manually tested in the browser; the agent's speech stops
+and the session responds to the new input instead of finishing its sentence.
+
 Run this by hand in the browser (`npm run dev` + backend running with a
 real key):
 
