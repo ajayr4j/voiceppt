@@ -1,6 +1,9 @@
 import type { SessionResponse, Slide } from "./types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000";
+// Strip any trailing slash so `${API_BASE_URL}/api/...` can't become a
+// double slash (e.g. "https://host.onrender.com/" + "/api/slides" would
+// 404 on FastAPI, which routes "/api/slides" but not "//api/slides").
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 
 export async function fetchSlides(): Promise<Slide[]> {
   const response = await fetch(`${API_BASE_URL}/api/slides`);

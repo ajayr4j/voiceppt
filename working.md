@@ -322,3 +322,40 @@ either.
   them, and the deployment checklist. Also ticked off SPEC.md's acceptance-criteria
   checkboxes and corrected its stale "eval not executed" out-of-scope line, now that
   both are actually done.
+
+## 16. Live deploy bug: "Failed to fetch" on the deployed frontend
+
+- After both platforms were live (`https://voiceppt.netlify.app`,
+  `https://voiceppt-backend.onrender.com`), Render's logs showed
+  `GET //api/slides HTTP/1.1" 404` (note the double slash) and the deployed
+  frontend showed "Could not load slides: Failed to fetch".
+- Two independent bugs, not one — important to separate them because they produce
+  overlapping symptoms:
+  1. **Double-slash 404**: `frontend/src/api.ts` built URLs as
+     `${API_BASE_URL}/api/slides` with no normalization. If `VITE_API_BASE_URL` is
+     ever entered with a trailing slash (an easy mistake — Netlify's env var UI
+     doesn't warn you), the result is `.../  /api/slides`, which FastAPI's router
+     doesn't match (it only registers `/api/slides`), hence the 404 in Render's
+     logs. Fixed defensively: `API_BASE_URL` now strips trailing slashes once at
+     the top of `api.ts` (`.replace(/\/+$/, "")`), so this class of bug can't
+     recur regardless of how the env var gets entered on any platform.
+  2. **"Failed to fetch" is a CORS symptom, not a 404 symptom**: a `fetch()` that
+     gets back an actual HTTP response (even a 404) resolves normally — the app's
+     own error-handling would have shown "Failed to load slides (404)", not
+     "Failed to fetch". A browser only reports the generic "Failed to fetch"
+     `TypeError` when the request never completed as a same-origin-equivalent
+     response — almost always a CORS rejection (`Access-Control-Allow-Origin`
+     didn't match the `Origin` header), or occasionally DNS/connection failure.
+     Root cause: `render.yaml`'s `CORS_ALLOW_ORIGINS` was still committed as the
+     localhost placeholder (`http://localhost:5173`) from before the Netlify URL
+     existed. The user tried overriding it directly in Render's dashboard, but as
+     flagged pre-emptively in §15, Render's Blueprint sync re-applies committed
+     `render.yaml` values on every auto-deploy — so a dashboard-only edit doesn't
+     stick. Fix: committed the real origin, `https://voiceppt.netlify.app`
+     (bare origin — scheme + host, explicitly **no trailing slash**, since CORS
+     matching is an exact string compare against the `Origin` header, which never
+     includes one), directly into `render.yaml` and pushed, making it durable
+     across every future auto-deploy instead of a one-off dashboard fix.
+- Added a callout to README's deployment step 3 explaining the exact-origin-format
+  gotcha and why the value lives in `render.yaml` rather than only the dashboard,
+  so this doesn't bite again on a redeploy or a fork of this repo.

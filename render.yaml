@@ -15,4 +15,4 @@ services:
       - key: REALTIME_VOICE
         value: marin
       - key: CORS_ALLOW_ORIGINS
-        value: http://localhost:5173
+        value: https://voiceppt.netlify.app
