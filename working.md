@@ -181,3 +181,77 @@ either.
   useful for a reviewer skimming `git log`.
 - No remote/push without explicit confirmation — this file and the repo stay local
   until the user says to create/push to GitHub.
+
+## 12. Live key added — a real bug surfaced immediately
+
+- Once a real `OPENAI_API_KEY` was dropped in, `POST /api/session` worked (200, real
+  ephemeral `client_secret` returned), but the first real browser connection attempt
+  failed with `missing_required_parameter: session.type` from OpenAI.
+- Root cause: OpenAI's Realtime API had moved to a GA schema requiring an explicit
+  `"type": "realtime"` discriminator on the `session` object (vs. `"transcription"` for
+  a different session kind). The backend's `mint_client_secret()` call already included
+  it (written against docs verified at scaffold time), but the frontend's second,
+  separate `session.update` event — sent client-side over the WebRTC data channel after
+  connecting, to attach `instructions`/`tools`/`tool_choice` — predated that
+  verification pass and was missing the field. Re-verified the exact current schema via
+  `WebFetch` against `developers.openai.com` before patching (not assumed from memory,
+  since this is a fast-moving API surface) and fixed `useRealtimeSession.ts`.
+- This is the clearest illustration so far of why the backend contract tests
+  (§6, mocked) only prove "the code handles OpenAI's response shape as we modeled it,"
+  not "our assumed request shape still matches OpenAI's current API." Worth remembering
+  for any future changes to this integration: re-verify against live docs, don't trust
+  a schema that worked yesterday.
+
+## 13. Golden-dataset eval (`backend/eval/`)
+
+- **Why text mode, not real audio**: the brief's "agent should navigate slides based on
+  the user's question" requirement is fundamentally a *reasoning* test (given the
+  question, does the model pick the right tool call), not a speech-recognition test.
+  Running golden cases as text directly over the Realtime WebSocket API (not WebRTC, no
+  ephemeral token needed — a raw API-key WS connection is the normal server-side
+  integration pattern) isolates routing accuracy from STT accuracy, which the app's
+  design has no control over and would just add noise/ambiguity to failures.
+- **Why interruption/barge-in is excluded from the harness**: confirmed earlier (via
+  docs) that WebRTC barge-in is a server-side audio-buffer-truncation behavior
+  triggered by VAD on an actual audio stream — there's no text-mode equivalent of "the
+  user started talking over the agent." Documented as a manual checklist in
+  `eval/README.md` instead of faking it with something that wouldn't actually prove
+  anything.
+- **Dataset**: 20 cases / 22 turns across 7 categories (direct content match, explicit
+  navigation commands, ambiguous overlap between slides, off-topic chit-chat,
+  multi-turn contextual follow-up, out-of-scope questions, adversarial/garbled input),
+  grounded in the actual slide content in `app/slides.py` rather than invented
+  questions, so expected answers are objectively checkable against real deck text.
+- **First run: 11/22 (50%) — every failure resolved to slide 1.** That pattern (100% of
+  wrong answers landing on the same slide, never a different wrong slide) was the tell
+  that this was systematic, not the model reasoning poorly question-by-question.
+  Inspected raw `response.done` output for a failing case and found the model opening
+  with the canned "greeting + present slide 1" behavior from the system prompt and
+  ignoring the user's actual question that turn.
+  - **Cause was the harness, not the app**: the real frontend always fires an
+    unprompted `response.create` immediately after `session.update` on connect, before
+    the user could possibly have said anything — so the "greet and show slide 1" rule
+    is consumed exactly once, before the user's first real question ever arrives. The
+    eval harness skipped that step to save an API call, which let the model treat the
+    user's first real question as session-start too, applying the greeting rule to it
+    instead of answering.
+  - Fixed by making the harness replicate the frontend exactly: send the same
+    unprompted opening `response.create` and discard its output before running the
+    labeled turns. Re-ran: **21/22 (95%)**.
+  - Decided *not* to additionally rewrite the app's system prompt to defensively scope
+    the greeting instruction (e.g. "only on the very first turn of the session") —
+    the real frontend's connection sequence makes this ordering guaranteed, not
+    coincidental, so hardening the prompt against a scenario that can't occur in the
+    shipped app would be solving a problem the harness introduced, not one the app has.
+- **Last failing case (`C1`) was a dataset labeling bug, not a model miss.** Expected
+  slide 1 or 5; actual was "no change." Inspected the model's actual text answer — it
+  correctly answered using slide 1's content without navigating, which is *right*
+  per the app's own instruction not to re-navigate for a follow-up on the
+  already-shown slide (the session opens on slide 1, and this question's content is
+  already covered there). Fixed the label (added `allow_no_change: true`) rather than
+  the behavior. Final: **22/22 (100%)**.
+- **Takeaway worth remembering**: a "failing" eval doesn't always mean the thing under
+  test is wrong — two of the three rounds of failures here were artifacts of the eval
+  itself (harness not matching real app sequencing, dataset label not covering a valid
+  outcome). Treating every red result as a finding to inspect, rather than auto-fixing
+  the dataset or the app to force green, is what surfaced which one was actually which.
