@@ -125,6 +125,12 @@ instead of crashing (see tests). Voice obviously needs the real key.
   fixing a live API schema-drift bug (`session.type` became a required field
   in the GA Realtime API) the moment a real key was added. Documented in
   `working.md` §12.
+- **Live deployment**: both hosted pieces above are up and confirmed working
+  against the deployed URLs, not just localhost — the Netlify frontend loads
+  the deck from the Render backend with no console/network errors. One
+  deploy-specific bug (a stale CORS origin plus a trailing-slash URL edge
+  case) surfaced post-deploy and was fixed directly against the live
+  services; root cause and fix are in `working.md` §16.
 
 ---
 
