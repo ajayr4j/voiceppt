@@ -1,22 +1,33 @@
 # voiceppt: Voice-Driven Slide Presenter
 
-Take-home prototype for SynthioLabs (Solutions Engineer, AI). A voice AI agent
-presents a 6-slide deck, answers spoken questions grounded in the deck content,
-automatically navigates to the relevant slide as the conversation moves, and
-can be interrupted mid-sentence.
+Take-home prototype for SynthioLabs (Solutions Engineer, AI): a voice AI agent
+presents a 6-slide deck, answers spoken questions grounded in the deck
+content, navigates to the relevant slide as the conversation moves, and can
+be interrupted mid-sentence.
 
-**Status: working end-to-end**, verified against the real OpenAI Realtime API
-(not just mocked). See [Verification](#verification) below.
+## Executive summary
 
-**Live demo:** frontend at https://voiceppt.netlify.app, backend at
-https://voiceppt-backend.onrender.com (see [Deployment](#deployment) for how
-these two are wired together).
+- **Status:** working end-to-end, verified against the real OpenAI Realtime
+  API, not just mocked.
+- **Live demo:** [frontend](https://voiceppt.netlify.app) ·
+  [backend](https://voiceppt-backend.onrender.com) (wiring explained in
+  [Deployment](#deployment)).
+- **Stack:** FastAPI + React/Vite/TS. OpenAI Realtime API
+  (`gpt-realtime-2.1`) over WebRTC for speech-to-speech, tool-calling
+  (`show_slide`) for navigation, server-side VAD for barge-in.
+- **Verified:** 6/6 backend unit tests, 22/22 golden-dataset eval, barge-in
+  confirmed live with a real microphone, deployed and smoke-tested against
+  the URLs above. Full detail in [Verification](#verification).
+- **Docs:** this file is setup/run/deploy. [`SPEC.md`](SPEC.md) is the
+  condensed spec and contracts. [`working.md`](working.md) is the full
+  decision log, optional deep-dive. [`stack.md`](stack.md) covers the dev
+  tooling this was built with.
 
 ---
 
 ## How it works
 
-- **Topic:** "How Large Language Models Work": 6 slides (overview,
+- **Topic:** "How Large Language Models Work", 6 slides (overview,
   tokenization, transformers & attention, training/RLHF, inference &
   sampling, limitations). Chosen so the agent has natural reasons to jump
   across non-adjacent slides, not just next/previous.
@@ -29,6 +40,8 @@ these two are wired together).
 - **Interruption:** handled automatically by OpenAI's server-side VAD over
   WebRTC (it truncates in-flight audio the instant it detects the user
   talking), so no custom cancel/truncate logic is needed client-side.
+
+## Architecture
 
 ```
 Browser (React)                      FastAPI backend                 OpenAI Realtime API
@@ -49,10 +62,7 @@ Browser (React)                      FastAPI backend                 OpenAI Real
 Full rationale behind every architectural decision (why FastAPI/React, why
 the Realtime API over a cascaded STT→LLM→TTS pipeline, why tool calling over
 keyword matching, trade-offs for a production/pharma deployment, etc.) is in
-[`working.md`](working.md). [`SPEC.md`](SPEC.md) has the condensed
-requirements/contracts. [`stack.md`](stack.md) covers the development
-environment and AI tooling this was built with, as opposed to the app's own
-runtime stack described above.
+[`working.md`](working.md).
 
 ---
 
