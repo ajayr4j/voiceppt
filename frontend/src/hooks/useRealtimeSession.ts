@@ -133,6 +133,7 @@ export function useRealtimeSession({ onShowSlide }: UseRealtimeSessionOptions) {
         sendEvent({
           type: "session.update",
           session: {
+            type: "realtime",
             instructions: session.instructions,
             tools: session.tools,
             tool_choice: "auto",
