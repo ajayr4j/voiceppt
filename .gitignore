@@ -1,0 +1,21 @@
+# Environment secrets (keep .env.example tracked)
+.env
+*.env
+!*.env.example
+
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.log
