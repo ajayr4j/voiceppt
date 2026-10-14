@@ -70,6 +70,9 @@ Handled by OpenAI's server-side VAD over the WebRTC session (confirmed in docs: 
 - [x] `working.md` documents the rationale behind every non-obvious decision.
 - [x] Golden-dataset eval executed against the real API — 22/22 (100%). See `backend/eval/`.
 - [x] Interruption/barge-in manually verified live with a real microphone.
+- [x] Deployed live (Netlify frontend + Render backend) and verified working against the
+      deployed URLs, not just localhost. See `README.md` Verification section and
+      `working.md` §16 for a deploy-time CORS/URL bug that was found and fixed.
 
 ## Explicitly out of scope
 
