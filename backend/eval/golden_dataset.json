@@ -1,0 +1,164 @@
+[
+  {
+    "id": "A1",
+    "category": "direct_content_match",
+    "note": "Context window is explicitly on slide 2.",
+    "turns": [
+      { "user_text": "What's a context window, exactly?", "expected": { "type": "specific", "slide_id": 2 } }
+    ]
+  },
+  {
+    "id": "A2",
+    "category": "direct_content_match",
+    "note": "Self-attention is explicitly on slide 3.",
+    "turns": [
+      { "user_text": "How does attention actually work inside a transformer?", "expected": { "type": "specific", "slide_id": 3 } }
+    ]
+  },
+  {
+    "id": "A3",
+    "category": "direct_content_match",
+    "note": "RLHF is explicitly on slide 4.",
+    "turns": [
+      { "user_text": "What is RLHF and why does it matter for how the model behaves?", "expected": { "type": "specific", "slide_id": 4 } }
+    ]
+  },
+  {
+    "id": "A4",
+    "category": "direct_content_match",
+    "note": "Hallucination is explicitly on slide 6.",
+    "turns": [
+      { "user_text": "Why does the model sometimes just make things up?", "expected": { "type": "specific", "slide_id": 6 } }
+    ]
+  },
+  {
+    "id": "B1",
+    "category": "explicit_navigation_command",
+    "note": "Direct slide-number command.",
+    "turns": [
+      { "user_text": "Can you take me to slide 5?", "expected": { "type": "specific", "slide_id": 5 } }
+    ]
+  },
+  {
+    "id": "B2",
+    "category": "explicit_navigation_command",
+    "note": "Relative navigation phrasing, not a slide number.",
+    "turns": [
+      { "user_text": "Skip ahead to the training slide.", "expected": { "type": "specific", "slide_id": 4 } }
+    ]
+  },
+  {
+    "id": "B3",
+    "category": "explicit_navigation_command",
+    "note": "Implicit 'last slide' reference.",
+    "turns": [
+      { "user_text": "Can we jump to the last slide in the deck?", "expected": { "type": "specific", "slide_id": 6 } }
+    ]
+  },
+  {
+    "id": "C1",
+    "category": "ambiguous_overlap",
+    "note": "Next-token generation appears on both slide 1 (intro) and slide 5 (inference/sampling). Not navigating is also valid: the session opens on slide 1, and this content is already covered there, so the 'don't re-navigate for a follow-up on the current slide' rule can legitimately apply.",
+    "turns": [
+      { "user_text": "How does the model decide what word comes next, one piece at a time?", "expected": { "type": "any_of", "slide_ids": [1, 5], "allow_no_change": true } }
+    ]
+  },
+  {
+    "id": "C2",
+    "category": "ambiguous_overlap",
+    "note": "Transformer architecture is namechecked on slide 1 and detailed on slide 3.",
+    "turns": [
+      { "user_text": "What makes transformers better than older recurrent models?", "expected": { "type": "any_of", "slide_ids": [1, 3] } }
+    ]
+  },
+  {
+    "id": "C3",
+    "category": "ambiguous_overlap",
+    "note": "Chatbot behavior is mentioned on slide 1, but the actual mechanism (RLHF) is slide 4.",
+    "turns": [
+      { "user_text": "How is the model actually trained to act like a helpful chatbot?", "expected": { "type": "any_of", "slide_ids": [1, 4] } }
+    ]
+  },
+  {
+    "id": "D1",
+    "category": "off_topic_no_nav",
+    "note": "Pure meta/small talk, nothing to navigate to.",
+    "turns": [
+      { "user_text": "Hey, can you hear me okay?", "expected": { "type": "no_change" } }
+    ]
+  },
+  {
+    "id": "D2",
+    "category": "off_topic_no_nav",
+    "note": "Off-topic chit-chat unrelated to the deck.",
+    "turns": [
+      { "user_text": "What's the weather like today?", "expected": { "type": "no_change" } }
+    ]
+  },
+  {
+    "id": "D3",
+    "category": "off_topic_no_nav",
+    "note": "Closing acknowledgment, no new topic.",
+    "turns": [
+      { "user_text": "Okay cool, thanks, that makes sense.", "expected": { "type": "no_change" } }
+    ]
+  },
+  {
+    "id": "E1",
+    "category": "contextual_follow_up",
+    "note": "Second turn is a follow-up on the same slide and should NOT re-trigger navigation.",
+    "turns": [
+      { "user_text": "Tell me about tokenization.", "expected": { "type": "specific", "slide_id": 2 } },
+      { "user_text": "Can you give me another example of that?", "expected": { "type": "no_change" } }
+    ]
+  },
+  {
+    "id": "E2",
+    "category": "contextual_follow_up",
+    "note": "Second turn is a follow-up on the same slide and should NOT re-trigger navigation.",
+    "turns": [
+      { "user_text": "What is self-attention?", "expected": { "type": "specific", "slide_id": 3 } },
+      { "user_text": "And how many of those attention heads are typically used?", "expected": { "type": "no_change" } }
+    ]
+  },
+  {
+    "id": "F1",
+    "category": "out_of_scope_question",
+    "note": "Not in the deck at all; agent should answer or decline without navigating.",
+    "turns": [
+      { "user_text": "What's the capital of France?", "expected": { "type": "no_change" } }
+    ]
+  },
+  {
+    "id": "F2",
+    "category": "out_of_scope_question",
+    "note": "Creative request unrelated to the deck.",
+    "turns": [
+      { "user_text": "Can you write me a short poem about the ocean?", "expected": { "type": "no_change" } }
+    ]
+  },
+  {
+    "id": "F3",
+    "category": "out_of_scope_question",
+    "note": "Plausible-sounding LLM question that is NOT covered by any slide (pricing) - checks against hallucinated navigation.",
+    "turns": [
+      { "user_text": "How much does it cost per token to run GPT-4?", "expected": { "type": "no_change" } }
+    ]
+  },
+  {
+    "id": "G1",
+    "category": "edge_case_adversarial",
+    "note": "Single utterance referencing two different slides' topics at once.",
+    "turns": [
+      { "user_text": "Can you quickly compare tokenization and attention for me?", "expected": { "type": "any_of", "slide_ids": [2, 3] } }
+    ]
+  },
+  {
+    "id": "G2",
+    "category": "edge_case_adversarial",
+    "note": "Garbled/unclear input - should not produce a spurious tool call.",
+    "turns": [
+      { "user_text": "uh, asdkfj, mumble mumble, not sure what I'm asking here", "expected": { "type": "no_change" } }
+    ]
+  }
+]
