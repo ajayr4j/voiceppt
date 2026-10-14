@@ -50,7 +50,9 @@ Full rationale behind every architectural decision (why FastAPI/React, why
 the Realtime API over a cascaded STT→LLM→TTS pipeline, why tool calling over
 keyword matching, trade-offs for a production/pharma deployment, etc.) is in
 [`working.md`](working.md). [`SPEC.md`](SPEC.md) has the condensed
-requirements/contracts.
+requirements/contracts. [`stack.md`](stack.md) covers the development
+environment and AI tooling this was built with, as opposed to the app's own
+runtime stack described above.
 
 ---
 
