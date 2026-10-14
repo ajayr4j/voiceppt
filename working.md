@@ -285,3 +285,40 @@ either.
   - "User can interrupt the agent" → confirmed by direct human test (this section,
     inherently manual, not automatable without overstating what a synthetic test
     actually proves).
+
+## 15. GitHub push and deployment prep
+
+- Verified commit authorship before the first public push, per explicit instruction:
+  `git log --format='%an <%ae> / committer: %cn <%ce>'` across all 7 commits confirmed
+  every one is already authored/committed as the user (`ajayr4j <ajayraj296@gmail.com>`),
+  and none contain a "Co-Authored-By: Claude" trailer — nothing needed rewriting.
+  (A `git push` attempt was blocked once by the harness's auto-mode classifier wanting
+  explicit proof of that check; re-confirmed and the user approved before retrying.)
+- Local branch was `master` (virtualenv/git defaults); renamed to `main` before pushing
+  since that's the modern convention and what `gh repo create` expects to track.
+- Repo pushed to `https://github.com/ajayr4j/voiceppt` (public).
+- **Deployment split across two hosts, not one**: Netlify is a static host — it can't
+  run a persistent Python process, and the backend has to stay a real server because it
+  holds the real `OPENAI_API_KEY` server-side (the whole point of the ephemeral-token
+  design in §4/§2 — the key must never reach the browser). So: frontend → Netlify
+  (`netlify.toml`), backend → Render (`render.yaml`), chosen over Railway/Fly/Vercel
+  because it's the least rework — native Python/uvicorn support, deploys straight from
+  the already-pushed GitHub repo with no code changes, free tier adequate for a demo.
+- **Why I didn't run the deploys myself**: both platforms require account-linked OAuth
+  login in a browser, which I can't complete. Rather than ask for raw credentials,
+  prepared both config files (`render.yaml` marks `OPENAI_API_KEY` as `sync: false` so
+  Render prompts for it in the dashboard instead of it ever touching the repo) and wrote
+  an exact numbered checklist into README.md's Deployment section — the user clicks
+  through Render first (to get the backend URL), then Netlify (pointing
+  `VITE_API_BASE_URL` at that backend URL), then closes the loop by setting the
+  backend's `CORS_ALLOW_ORIGINS` to the final Netlify URL. This three-step circular
+  dependency (frontend needs backend's URL, backend's CORS needs frontend's URL) is
+  inherent to splitting the two hosts and is called out explicitly in the README so it
+  isn't a surprise mid-setup.
+- Did a full README.md rewrite alongside this (it still said "implementation in
+  progress" with no setup/run/test instructions) — added setup steps, env var table,
+  a Verification section summarizing test/eval/manual-check results with links to the
+  detailed sources (`working.md`, `backend/eval/README.md`) rather than duplicating
+  them, and the deployment checklist. Also ticked off SPEC.md's acceptance-criteria
+  checkboxes and corrected its stale "eval not executed" out-of-scope line, now that
+  both are actually done.

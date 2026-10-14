@@ -63,15 +63,18 @@ Handled by OpenAI's server-side VAD over the WebRTC session (confirmed in docs: 
 
 ## Acceptance criteria
 
-- [ ] Backend serves slide data and mints a session without the key present (fails gracefully with a clear error, doesn't crash).
-- [ ] Frontend renders all 6 slides and can navigate manually (fallback for when voice isn't configured/available).
-- [ ] With a real `OPENAI_API_KEY` set, a voice session connects, the agent greets the user and talks through slide 1, answers a question by jumping to the matching slide, and can be interrupted mid-sentence.
-- [ ] Backend has passing tests that don't require a real API key (mocked).
-- [ ] `working.md` documents the rationale behind every non-obvious decision.
+- [x] Backend serves slide data and mints a session without the key present (fails gracefully with a clear error, doesn't crash).
+- [x] Frontend renders all 6 slides and can navigate manually (fallback for when voice isn't configured/available).
+- [x] With a real `OPENAI_API_KEY` set, a voice session connects, the agent greets the user and talks through slide 1, answers a question by jumping to the matching slide, and can be interrupted mid-sentence.
+- [x] Backend has passing tests that don't require a real API key (mocked) — 6/6.
+- [x] `working.md` documents the rationale behind every non-obvious decision.
+- [x] Golden-dataset eval executed against the real API — 22/22 (100%). See `backend/eval/`.
+- [x] Interruption/barge-in manually verified live with a real microphone.
 
-## Explicitly out of scope (per earlier architecture discussion)
+## Explicitly out of scope
 
 - Real `.pptx`/`.pdf` rendering — slides are styled React components built from data.
 - Multi-user/auth/persistence — single-session demo.
-- Automated eval harness run end-to-end (golden dataset design is documented; not executed, since a real API key isn't available in this environment).
+- Automated interruption testing — barge-in is a pure audio-timing behavior with no
+  text equivalent; it's verified manually instead (see `backend/eval/README.md`).
 - Self-hosted/open-source voice stack — documented as a production alternative in `README.md`, not built.
