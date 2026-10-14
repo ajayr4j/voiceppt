@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: voiceppt-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: REALTIME_MODEL
+        value: gpt-realtime-2.1
+      - key: REALTIME_VOICE
+        value: marin
+      - key: CORS_ALLOW_ORIGINS
+        value: http://localhost:5173
