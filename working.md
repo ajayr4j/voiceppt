@@ -359,3 +359,28 @@ either.
 - Added a callout to README's deployment step 3 explaining the exact-origin-format
   gotcha and why the value lives in `render.yaml` rather than only the dashboard,
   so this doesn't bite again on a redeploy or a fork of this repo.
+- **Follow-up — the `render.yaml` push alone didn't fix it.** After pushing the
+  corrected `CORS_ALLOW_ORIGINS` value in `render.yaml`, the new commit deployed
+  (confirmed live on Render's Deploys tab) but `curl`-ing `/api/slides` with
+  `Origin: https://voiceppt.netlify.app` still came back with no
+  `Access-Control-Allow-Origin` header at all, minutes after deploy — so the fix
+  hadn't actually landed where it mattered. Diagnosed by checking the live
+  Render dashboard directly (the user granted access to
+  `dashboard.render.com/web/srv-db7lmftg1s2s73b07cqg`): the Environment tab
+  showed `CORS_ALLOW_ORIGINS` was still `https://voiceppt.netlify.app/` — the
+  user's earlier manual dashboard override, **with a trailing slash**, which
+  the `render.yaml` push did not overwrite. This contradicts the assumption in
+  the entry above (that a blueprint-defined env var always re-syncs from
+  `render.yaml` on deploy) — in practice, once a value has been hand-edited in
+  the dashboard, Render treats it as a per-service override that a plain git
+  push/redeploy does not clobber; only editing it again in the dashboard (or an
+  explicit Blueprint "sync" action) changes it. Fixed by editing the value
+  directly in Render's Environment tab to the exact bare origin
+  (`https://voiceppt.netlify.app`, no trailing slash) and clicking "Save,
+  rebuild, and deploy." Verified: `curl` with the matching `Origin` header now
+  gets back `access-control-allow-origin: https://voiceppt.netlify.app`, and
+  the live Netlify site loads all 6 slides with no console/network errors.
+  **Lesson for the README/future redeploys**: the source of truth for this var
+  is whatever's actually live in the dashboard, not just what's committed in
+  `render.yaml` — if the two drift (e.g. from an earlier manual fix attempt),
+  the dashboard wins and must be corrected there directly.

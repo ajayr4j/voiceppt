@@ -164,13 +164,17 @@ needs an actual host. This repo deploys as two pieces:
    CORS matches the browser's `Origin` header exactly, which never has a
    trailing slash; a mismatch here surfaces in the browser as a generic
    `Failed to fetch`, not an auth error.
-2. This repo commits that value directly in `render.yaml` rather than
-   relying on a dashboard-only edit: Render's Blueprint sync re-applies
-   `render.yaml`'s env var values on every auto-deploy, so a value changed
-   only in the dashboard would be silently reverted on the next push. The
-   committed value already points at the live Netlify URL above.
-3. Redeploy the backend (Render redeploys automatically on env var save, or
-   use the manual "Deploy" button).
+2. This repo also commits a best-guess value directly in `render.yaml` so a
+   fresh deploy of this Blueprint starts with the right origin out of the
+   box. In practice, though, **the dashboard value is the one that's actually
+   live** — once you edit `CORS_ALLOW_ORIGINS` in the Environment tab, Render
+   treats it as a per-service override that a later `git push`/redeploy does
+   *not* revert back to the `render.yaml` value, even though both are
+   nominally the "same" blueprint-managed variable. So if this value is ever
+   wrong, fix it in the Environment tab directly — don't assume pushing a
+   `render.yaml` change alone will update it.
+3. Click "Save, rebuild, and deploy" (editing an env var in the dashboard
+   triggers this automatically).
 
 Render's free tier spins down on inactivity — the first request after idle
 can take ~30-60s to cold-start.
